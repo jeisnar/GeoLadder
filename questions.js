@@ -5,7 +5,7 @@
   var shuffle = GG.utils.shuffle;
   var pick = GG.utils.pick;
 
-  var RAW = [
+  var DEFAULTS = [
     /* ===================== MUDAH ===================== */
     {
       id: 'E01',
@@ -259,12 +259,89 @@
     }
   ];
 
+  /* =========================================================
+     Penyimpanan bank soal (LocalStorage) — dikelola lewat Mode Guru
+     ========================================================= */
+
+  var KEY = GG.CONFIG.questionStoreKey;
+  var LEVELS = ['easy', 'medium', 'hard'];
+  var TAG = /<(\/?)([a-z][a-z0-9]*)\b[^>]*>/gi;
   var used = { easy: {}, medium: {}, hard: {} };
+  var bank = [];
+
+  function clone(x) {
+    return JSON.parse(JSON.stringify(x));
+  }
+
+  function sanitize(s) {
+    return String(s == null ? '' : s).replace(TAG, function (m, slash, tag) {
+      tag = tag.toLowerCase();
+      return /^(b|i|sub|sup|br)$/.test(tag) ? '<' + slash + tag + '>' : '';
+    });
+  }
+
+  function normalize(q) {
+    if (!q || LEVELS.indexOf(q.level) < 0 || !Array.isArray(q.options) || q.options.length !== 4) return null;
+    return {
+      id: String(q.id || ''),
+      level: q.level,
+      text: sanitize(q.text).trim(),
+      options: q.options.map(function (o) {
+        return sanitize(o).trim();
+      }),
+      answer: Number(q.answer),
+      explanation: sanitize(q.explanation).trim()
+    };
+  }
+
+  function validate(q) {
+    if (!q.text) return 'Teks soal wajib diisi.';
+    if (
+      q.options.some(function (o) {
+        return !o;
+      })
+    )
+      return 'Keempat pilihan jawaban wajib diisi.';
+    if (new Set(q.options).size < 4) return 'Pilihan jawaban tidak boleh sama.';
+    if (!(q.answer >= 0 && q.answer < 4)) return 'Pilih satu jawaban yang benar.';
+    if (!q.explanation) return 'Pembahasan wajib diisi.';
+    return '';
+  }
+
+  function load() {
+    var saved = GG.utils.storage.get(KEY, null);
+    var out = [];
+    if (Array.isArray(saved)) {
+      saved.forEach(function (raw) {
+        var q = normalize(raw);
+        if (q && q.id && !validate(q)) out.push(q);
+      });
+    }
+    LEVELS.forEach(function (lvl) {
+      var has = out.some(function (q) {
+        return q.level === lvl;
+      });
+      if (!has) {
+        DEFAULTS.forEach(function (d) {
+          if (d.level === lvl) out.push(normalize(d));
+        });
+      }
+    });
+    return out;
+  }
+
+  function save() {
+    GG.utils.storage.set(KEY, bank);
+  }
 
   function pool(level) {
-    return RAW.filter(function (q) {
+    return bank.filter(function (q) {
       return q.level === level;
     });
+  }
+
+  function newId() {
+    return 'Q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   }
 
   function prepare(q) {
@@ -285,11 +362,62 @@
     };
   }
 
+  bank = load();
+
   GG.QuestionBank = {
-    all: RAW,
+    sanitize: sanitize,
 
     count: function (level) {
-      return level ? pool(level).length : RAW.length;
+      return level ? pool(level).length : bank.length;
+    },
+
+    list: function (level) {
+      return clone(pool(level));
+    },
+
+    add: function (data) {
+      var q = normalize(Object.assign({}, data, { id: 'x' }));
+      if (!q) return 'Data soal tidak valid.';
+      var err = validate(q);
+      if (err) return err;
+      q.id = newId();
+      bank.push(q);
+      save();
+      return '';
+    },
+
+    update: function (id, data) {
+      var idx = bank.findIndex(function (q) {
+        return q.id === id;
+      });
+      if (idx < 0) return 'Soal tidak ditemukan.';
+      var q = normalize(Object.assign({}, data, { id: id }));
+      if (!q) return 'Data soal tidak valid.';
+      var err = validate(q);
+      if (err) return err;
+      if (q.level !== bank[idx].level && pool(bank[idx].level).length <= 1) {
+        return 'Setiap tingkat harus memiliki minimal 1 soal.';
+      }
+      bank[idx] = q;
+      save();
+      return '';
+    },
+
+    remove: function (id) {
+      var idx = bank.findIndex(function (q) {
+        return q.id === id;
+      });
+      if (idx < 0) return 'Soal tidak ditemukan.';
+      if (pool(bank[idx].level).length <= 1) return 'Setiap tingkat harus memiliki minimal 1 soal.';
+      bank.splice(idx, 1);
+      save();
+      return '';
+    },
+
+    resetDefaults: function () {
+      bank = DEFAULTS.map(normalize);
+      save();
+      used = { easy: {}, medium: {}, hard: {} };
     },
 
     reset: function () {
@@ -298,6 +426,7 @@
 
     next: function (level) {
       var all = pool(level);
+      if (!all.length) all = bank.slice();
       var fresh = all.filter(function (q) {
         return !used[level][q.id];
       });

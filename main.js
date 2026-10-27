@@ -12,6 +12,7 @@
 
   function boot() {
     GG.UI.init();
+    GG.Teacher.init();
   }
 
   if (document.readyState === 'loading') {

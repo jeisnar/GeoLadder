@@ -11,6 +11,8 @@
     startLadder: 1,
     minPlayers: 2,
     maxPlayers: 4,
+    teacherPin: '1234',
+    questionStoreKey: 'geoladder:questions:v2',
 
     points: {
       easy: 10,

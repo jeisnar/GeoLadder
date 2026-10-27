@@ -116,12 +116,12 @@
     }
   };
 
-  Game.prototype.nearestLadder = function (pos) {
-    var best = null;
-    this.cfg.ladders.forEach(function (l) {
-      if (l.from >= pos && (!best || l.from < best.from)) best = l;
-    });
-    return best;
+  /* Tangga yang kakinya TEPAT di petak pemain (null bila tidak ada). */
+  Game.prototype.ladderAt = function (pos) {
+    for (var i = 0; i < this.cfg.ladders.length; i++) {
+      if (this.cfg.ladders[i].from === pos) return this.cfg.ladders[i];
+    }
+    return null;
   };
 
   Game.prototype.swapCandidates = function (p) {
@@ -151,8 +151,8 @@
 
     if (card.type === 'ladder') {
       if (p.ladder <= 0) return { ok: false, reason: 'Kartu Tangga sudah habis' };
-      var ladder = this.nearestLadder(p.pos);
-      if (!ladder) return { ok: false, reason: 'Tidak ada tangga di depan posisimu' };
+      var ladder = this.ladderAt(p.pos);
+      if (!ladder) return { ok: false, reason: 'Kartu Tangga hanya bisa dipakai tepat di kaki tangga' };
       return { ok: true, ladder: ladder };
     }
 
@@ -409,7 +409,8 @@
   };
 
   Game.prototype.playLadder = async function (p) {
-    var ladder = this.nearestLadder(p.pos);
+    var ladder = this.ladderAt(p.pos);
+    if (!ladder || p.ladder <= 0) return false; /* validasi ulang: bukan di kaki tangga */
     p.ladder -= 1;
 
     var res = await this.ask(p, {
@@ -417,7 +418,7 @@
       contextLabel: 'Kartu Tangga — puncak tangga kotak ' + ladder.to,
       consequence: {
         correct: 'Kamu memanjat tangga ke kotak ' + ladder.to + '!',
-        wrong: 'Gagal memanjat. Kamu tetap di kotak ' + p.pos + '.'
+        wrong: 'Gagal memanjat. Kamu tetap di kaki tangga (kotak ' + p.pos + ') dan giliranmu selesai.'
       },
       reward: false
     });

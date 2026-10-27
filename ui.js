@@ -292,7 +292,7 @@
       h('b', null, 'Kartu Tangga'),
       ': naik ke kotak ',
       h('b', null, String(st.ladder.to)),
-      ' bila soal ' + CONFIG.levels[st.ladder.level].label.toLowerCase() + ' di puncaknya terjawab benar.'
+      ' bila soal ' + CONFIG.levels[st.ladder.level].label.toLowerCase() + ' di puncaknya terjawab benar. Jika salah, kamu tetap di kaki tangga dan giliran selesai.'
     );
   }
 
@@ -389,7 +389,7 @@
             }
           },
           h('span', { html: ICON[s.type] }),
-          h('span', null, h('strong', null, s.title), h('small', null, s.desc)),
+          h('span', null, h('strong', null, s.title), h('small', null, s.type === 'ladder' && !st.ok && p.ladder > 0 ? 'Aktif hanya di kaki tangga' : s.desc)),
           h('span', { class: 'sp-count' }, '×' + s.count)
         )
       );
@@ -924,8 +924,9 @@
       ['Soal di Setiap Kotak', 'Setelah mendarat, kamu menjawab soal sesuai warna kotak: ● Mudah (a, r, Uₙ), ◆ Sedang (Sₙ, dua suku acak), ▲ Sulit (S∞, soal cerita).'],
       ['Jawaban Salah', 'Kamu mundur 1–2 langkah sesuai pengaturan. Jika mendarat di kepala ular lalu salah menjawab, kamu meluncur turun ke ekor ular; jika benar, kamu lolos.'],
       ['Kartu Tukar', 'Pilih 1 pemain target (posisi berbeda) lalu jawab soal sedang/sulit. Benar: posisi tertukar. Salah: giliran hangus.'],
-      ['Kartu Tangga', 'Melompat ke tangga terdekat di depanmu. Kamu harus menjawab soal di puncak tangga itu. Benar: naik. Salah: tetap di tempat.'],
+      ['Kartu Tangga', 'Hanya aktif saat bidakmu berada tepat di kaki tangga. Jawab soal di puncak tangga: benar berarti naik, salah berarti tetap di kaki tangga dan giliran selesai.'],
       ['Poin & Bonus', 'Benar: +10 (mudah), +20 (sedang), +30 (sulit), ditambah bonus beruntun. Jawaban sulit yang benar saat mendarat dapat memberi kartu spesial tambahan.'],
+      ['Mode Guru', 'Tombol Mode Guru (PIN) membuka panel untuk menambah, mengubah, atau menghapus soal per tingkat. Siswa hanya bisa bermain dan menjawab.'],
       ['Menang', 'Pemain pertama yang tiba di kotak finis dan menjawab Soal Final dengan benar adalah pemenangnya. Gagal di soal final berarti mundur.']
     ];
     var grid = h('div', { class: 'rules-grid' });
@@ -1036,6 +1037,9 @@
   GG.UI = {
     init: init,
     view: view,
+    openModal: openModal,
+    confirmDialog: confirmDialog,
+    toast: toast,
     get game() {
       return game;
     }
