@@ -10,6 +10,7 @@
 
   var unlocked = false;
   var panel = null;
+  var offs = [];
   var host = null;
   var state = { level: 'easy', editing: null };
 
@@ -21,14 +22,6 @@
     var d = document.createElement('div');
     d.innerHTML = QB.sanitize(html);
     return d.textContent;
-  }
-
-  function syncBadge() {
-    var btn = $('#btn-teacher');
-    if (btn) {
-      btn.classList.toggle('is-active', unlocked);
-      btn.setAttribute('aria-label', unlocked ? 'Panel guru (aktif)' : 'Panel guru');
-    }
   }
 
   function open() {
@@ -55,7 +48,6 @@
       if (input.value === GG.CONFIG.teacherPin) {
         unlocked = true;
         modal.close();
-        syncBadge();
         showPanel();
       } else {
         err.textContent = 'PIN salah. Coba lagi.';
@@ -99,10 +91,23 @@
     state.editing = null;
     host = h('div', { class: 'tp' });
     render();
+    offs.push(
+      QB.on('status', function () {
+        var bar = host && host.querySelector('.tp-sync');
+        if (bar) paintStatus(bar);
+      }),
+      QB.on('change', function () {
+        if (host && !state.editing) render();
+      })
+    );
     panel = GG.UI.openModal(host, { className: 'modal-wide', dismissible: false });
   }
 
   function closePanel() {
+    offs.forEach(function (off) {
+      off();
+    });
+    offs = [];
     if (panel) panel.close();
     panel = null;
     host = null;
@@ -112,6 +117,7 @@
     if (!host) return;
     host.innerHTML = '';
     host.appendChild(header());
+    host.appendChild(syncBar());
     host.appendChild(levelTabs());
     host.appendChild(state.editing ? form() : list());
   }
@@ -124,7 +130,7 @@
         'div',
         null,
         h('h3', null, 'Panel Guru · Bank Soal'),
-        h('p', { class: 'modal-text' }, 'Perubahan tersimpan di perangkat ini dan langsung dipakai pada soal berikutnya.')
+        h('p', { class: 'modal-text' }, 'Perubahan otomatis disimpan ke cloud dan langsung dipakai di perangkat siswa.')
       ),
       h(
         'div',
@@ -138,7 +144,6 @@
               click: function () {
                 unlocked = false;
                 closePanel();
-                syncBadge();
                 GG.UI.toast('Keluar dari Mode Guru', 'info');
               }
             }
@@ -148,6 +153,75 @@
         h('button', { class: 'btn btn-primary btn-sm', type: 'button', on: { click: closePanel } }, 'Tutup')
       )
     );
+  }
+
+  var STATE_LABEL = {
+    online: 'Online',
+    syncing: 'Menyinkronkan…',
+    offline: 'Offline',
+    error: 'Gagal sinkron',
+    local: 'Lokal',
+    loading: 'Memuat…'
+  };
+
+  function paintStatus(bar) {
+    var st = QB.status;
+    bar.className = 'tp-sync is-' + st.state;
+    bar.querySelector('.tp-sync-text').textContent = (STATE_LABEL[st.state] || st.state) + (st.detail ? ' · ' + st.detail : '');
+  }
+
+  function syncBar() {
+    var bar = h('div', { class: 'tp-sync' }, h('i', { class: 'tp-dot' }), h('span', { class: 'tp-sync-text' }));
+    paintStatus(bar);
+    var wrap = h('div', { class: 'tp-cloud' }, bar);
+    if (GG.Cloud.configured()) {
+      var key = h('input', {
+        type: 'password',
+        class: 'input',
+        autocomplete: 'off',
+        placeholder: GG.Cloud.hasWriteKey() ? 'Kunci tulis tersimpan (isi untuk mengganti)' : 'Kunci tulis cloud',
+        'aria-label': 'Kunci tulis cloud'
+      });
+      wrap.appendChild(
+        h(
+          'div',
+          { class: 'tp-cloud-actions' },
+          h(
+            'button',
+            {
+              class: 'btn btn-ghost btn-sm',
+              type: 'button',
+              on: {
+                click: function () {
+                  QB.refresh().then(function (ok) {
+                    GG.UI.toast(ok ? 'Soal diperbarui dari cloud' : 'Tidak ada pembaruan dari cloud', ok ? 'good' : 'warn');
+                  });
+                }
+              }
+            },
+            'Sinkronkan'
+          ),
+          key,
+          h(
+            'button',
+            {
+              class: 'btn btn-soft btn-sm',
+              type: 'button',
+              on: {
+                click: function () {
+                  if (!key.value.trim()) return;
+                  GG.Cloud.setWriteKey(key.value);
+                  key.value = '';
+                  GG.UI.toast('Kunci tulis disimpan di perangkat ini', 'good');
+                }
+              }
+            },
+            'Simpan Kunci'
+          )
+        )
+      );
+    }
+    return wrap;
   }
 
   function levelTabs() {
@@ -204,19 +278,20 @@
             on: {
               click: function () {
                 GG.UI.confirmDialog({
-                  title: 'Pulihkan soal bawaan?',
-                  text: 'Semua soal buatan/perubahan guru akan diganti dengan bank soal bawaan.',
-                  okLabel: 'Pulihkan'
+                  title: 'Reset ke soal default?',
+                  text: 'Bank soal di cloud dan di perangkat ini akan DITIMPA dengan soal default bawaan. Soal buatan guru akan hilang.',
+                  okLabel: 'Reset'
                 }).then(function (ok) {
                   if (!ok) return;
-                  QB.resetDefaults();
-                  GG.UI.toast('Bank soal dipulihkan', 'info');
+                  QB.resetDefaults().then(function (synced) {
+                    GG.UI.toast(synced ? 'Direset ke soal default (cloud ikut ditimpa)' : 'Direset di perangkat ini; cloud belum terbarui', synced ? 'good' : 'warn');
+                  });
                   render();
                 });
               }
             }
           },
-          'Pulihkan Soal Bawaan'
+          'Reset ke Soal Default'
         )
       )
     );
@@ -437,10 +512,24 @@
     );
   }
 
+  /* Akses rahasia: Ctrl+Shift+G, atau klik logo judul 3x berturut-turut. */
+  function canOpen() {
+    return !document.body.classList.contains('has-modal');
+  }
+
   function init() {
-    var btn = $('#btn-teacher');
-    if (btn) btn.addEventListener('click', open);
-    syncBadge();
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey && e.shiftKey && !e.altKey && !e.metaKey && (e.code === 'KeyG' || e.key === 'G' || e.key === 'g')) {
+        e.preventDefault();
+        if (canOpen()) open();
+      }
+    });
+    var logo = $('#brand-link');
+    if (logo) {
+      logo.addEventListener('click', function (e) {
+        if (e.detail >= 3 && canOpen()) open();
+      });
+    }
   }
 
   GG.Teacher = {

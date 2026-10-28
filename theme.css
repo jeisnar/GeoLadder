@@ -71,32 +71,6 @@
   color: var(--text-soft);
 }
 
-/* Tombol ikon Mode Guru (tersembunyi/halus) */
-.btn-icon {
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 50%;
-}
-
-#btn-teacher {
-  opacity: 0.55;
-  transition: opacity 0.2s ease, color 0.2s ease, background 0.2s ease;
-}
-
-#btn-teacher:hover,
-#btn-teacher:focus-visible,
-#btn-teacher.is-active {
-  opacity: 1;
-}
-
-#btn-teacher.is-active {
-  color: var(--sage-deep);
-  background: var(--sage-soft);
-}
-
 /* Tombol suara (kanan bawah) */
 .audio-btn {
   position: fixed;
@@ -128,5 +102,56 @@
 @media (prefers-reduced-motion: reduce) {
   .bg-art svg {
     animation: none;
+  }
+}
+
+/* Layar loading saat mengunduh soal dari cloud */
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  background: rgba(243, 239, 230, 0.86);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  transition: opacity 0.35s ease;
+}
+
+.boot.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 40px;
+  border-radius: var(--radius);
+  background: rgba(251, 249, 244, 0.85);
+  box-shadow: var(--shadow-md);
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.boot-card strong {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+.spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 4px solid var(--sage-soft);
+  border-top-color: var(--sage-deep);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }

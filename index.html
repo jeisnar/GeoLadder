@@ -15,6 +15,13 @@
   <link rel="stylesheet" href="theme.css">
 </head>
 <body>
+  <div id="boot-screen" class="boot" role="status" aria-live="polite">
+    <div class="boot-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <strong>GeoLadder</strong>
+      <span id="boot-msg">Mengunduh soal terbaru…</span>
+    </div>
+  </div>
   <div id="app">
     <header class="topbar">
       <a class="brand" href="#" id="brand-link" aria-label="GeoLadder">
@@ -27,7 +34,6 @@
         </span>
       </a>
       <nav class="topbar-actions" aria-label="Menu utama">
-        <button class="btn btn-ghost btn-icon" id="btn-teacher" type="button" aria-label="Panel guru"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></button>
         <button class="btn btn-ghost btn-sm" id="btn-rules" type="button">Aturan</button>
         <button class="btn btn-ghost btn-sm is-hidden" id="btn-restart" type="button">Mulai Ulang</button>
         <button class="btn btn-ghost btn-sm is-hidden" id="btn-menu" type="button">Menu</button>
@@ -161,6 +167,8 @@
   <script src="utils.js"></script>
   <script src="audio.js"></script>
   <script src="background.js"></script>
+  <script src="default_questions.js"></script>
+  <script src="cloud.js"></script>
   <script src="questions.js"></script>
   <script src="board.js"></script>
   <script src="game.js"></script>

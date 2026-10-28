@@ -242,3 +242,57 @@
     width: 100%;
   }
 }
+
+.tp-cloud {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+
+.tp-sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.tp-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-mute);
+}
+
+.tp-sync.is-online .tp-dot {
+  background: var(--sage-deep);
+}
+
+.tp-sync.is-syncing .tp-dot,
+.tp-sync.is-loading .tp-dot {
+  background: var(--blue);
+  animation: spin 1s linear infinite;
+}
+
+.tp-sync.is-offline .tp-dot {
+  background: var(--sand-deep);
+}
+
+.tp-sync.is-error .tp-dot {
+  background: var(--clay-deep);
+}
+
+.tp-cloud-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tp-cloud-actions .input {
+  min-width: 180px;
+}
