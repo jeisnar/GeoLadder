@@ -266,6 +266,7 @@
       contextLabel: opts.contextLabel
     });
 
+    GG.Audio.sfx(ans.correct ? 'correct' : 'wrong');
     var points = this.award(p, opts.level, ans.correct);
 
     var bonus = '';
@@ -367,6 +368,7 @@
 
     if (snake) {
       p.pos = snake.to;
+      GG.Audio.sfx('snake');
       await this.view.board.slide(p.id, snake.to, 1100);
     } else {
       await this.walk(p, n, back);
@@ -394,6 +396,7 @@
     });
 
     if (res.correct) {
+      GG.Audio.sfx('swap');
       p.pos = b;
       target.pos = a;
       await Promise.all([
@@ -425,6 +428,7 @@
 
     if (res.correct) {
       p.pos = ladder.to;
+      GG.Audio.sfx('ladder');
       await this.view.board.slide(p.id, ladder.to, 1200);
       this.view.board.pulseCell(ladder.to);
       this.view.toast(p.name + ' naik tangga ke kotak ' + ladder.to, 'good');
@@ -436,6 +440,7 @@
 
   Game.prototype.win = async function (p) {
     p.score += CONFIG.points.finish;
+    GG.Audio.sfx('win');
     this.over = true;
     this.winner = p;
     this.view.refresh();

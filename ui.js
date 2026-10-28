@@ -604,6 +604,7 @@
       board.clearPreview();
     } else {
       selected = card;
+      GG.Audio.sfx('select');
       if (card.type === 'num') board.previewSquare(st.dest);
       else if (card.type === 'ladder') board.previewLadder(st.ladder);
       else board.clearPreview();
@@ -617,6 +618,7 @@
     var card = selected;
     var el = $('.card-num.is-selected') || $('.card-sp.is-selected');
     if (el) el.classList.add('is-played');
+    GG.Audio.sfx('play');
     board.clearPreview();
     await GG.utils.sleep(300);
     var consumed = await game.play(card);
@@ -926,7 +928,6 @@
       ['Kartu Tukar', 'Pilih 1 pemain target (posisi berbeda) lalu jawab soal sedang/sulit. Benar: posisi tertukar. Salah: giliran hangus.'],
       ['Kartu Tangga', 'Hanya aktif saat bidakmu berada tepat di kaki tangga. Jawab soal di puncak tangga: benar berarti naik, salah berarti tetap di kaki tangga dan giliran selesai.'],
       ['Poin & Bonus', 'Benar: +10 (mudah), +20 (sedang), +30 (sulit), ditambah bonus beruntun. Jawaban sulit yang benar saat mendarat dapat memberi kartu spesial tambahan.'],
-      ['Mode Guru', 'Tombol Mode Guru (PIN) membuka panel untuk menambah, mengubah, atau menghapus soal per tingkat. Siswa hanya bisa bermain dan menjawab.'],
       ['Menang', 'Pemain pertama yang tiba di kotak finis dan menjawab Soal Final dengan benar adalah pemenangnya. Gagal di soal final berarti mundur.']
     ];
     var grid = h('div', { class: 'rules-grid' });

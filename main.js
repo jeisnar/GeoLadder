@@ -11,6 +11,8 @@
   }
 
   function boot() {
+    GG.Background.init();
+    GG.Audio.init();
     GG.UI.init();
     GG.Teacher.init();
   }

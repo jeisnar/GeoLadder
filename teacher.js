@@ -24,13 +24,11 @@
   }
 
   function syncBadge() {
-    var badge = $('#mode-badge');
     var btn = $('#btn-teacher');
-    if (badge) {
-      badge.textContent = unlocked ? 'Mode Guru' : 'Mode Murid';
-      badge.classList.toggle('is-teacher', unlocked);
+    if (btn) {
+      btn.classList.toggle('is-active', unlocked);
+      btn.setAttribute('aria-label', unlocked ? 'Panel guru (aktif)' : 'Panel guru');
     }
-    if (btn) btn.textContent = unlocked ? 'Panel Guru' : 'Mode Guru';
   }
 
   function open() {

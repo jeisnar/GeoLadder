@@ -343,6 +343,7 @@
   Board.prototype.step = async function (id, n, ms) {
     ms = ms || 270;
     this.setPos(id, n, ms);
+    GG.Audio.sfx('step');
     this.hop(id);
     this.pulseCell(n);
     await sleep(ms + 25);
